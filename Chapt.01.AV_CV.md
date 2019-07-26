@@ -7,7 +7,7 @@ Of special interest is a stereo setup consisting of two synchronized cameras, wh
 
 - UBER AV:
 
-![no txt](img/uber_AV.jpg.png)
+![no txt](img/uber_AV.jpg)
 
 - TESLA AV:
 
