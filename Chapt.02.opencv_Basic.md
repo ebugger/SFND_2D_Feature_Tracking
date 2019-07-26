@@ -155,3 +155,10 @@ matcher->match(descSource, descRef, matches);
             }
         }
 ```
+
+## Match Performance
+![no txt](img/M1.png)
+
+![no txt](img/M2.png)
+
+![no txt](img/M3.png)
