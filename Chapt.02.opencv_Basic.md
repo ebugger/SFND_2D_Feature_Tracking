@@ -1,3 +1,28 @@
+##
+
+Point2f(x,y)
+```
+template<typename _Tp> inline
+Point_<_Tp>::Point_()
+    : x(0), y(0) {}
+```
+
+KeyPoint:
+```
+inline
+KeyPoint::KeyPoint(Point2f _pt, float _size, float _angle, float _response, int _octave, int _class_id)
+    : pt(_pt), size(_size), angle(_angle), response(_response), octave(_octave), class_id(_class_id) {}
+```
+
+DMatch:
+```
+inline
+DMatch::DMatch(int _queryIdx, int _trainIdx, float _distance)
+    : queryIdx(_queryIdx), trainIdx(_trainIdx), imgIdx(-1), distance(_distance) {}
+```
+
+
+
 ## Manipulating Matrices
 
 ```
