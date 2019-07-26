@@ -62,6 +62,7 @@ It is important to handle large amounts of data in a smart way so that images an
 ```
 
 ## DrawPoints
+it must be palced before imshow block(before sting... namedWindow... )
 ```
 cv::drawKeypoints(source, keyPoints, dest, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);  //cv::Scalar::all(-1) color random
 ```
