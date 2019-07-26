@@ -21,7 +21,10 @@ DMatch::DMatch(int _queryIdx, int _trainIdx, float _distance)
     : queryIdx(_queryIdx), trainIdx(_trainIdx), imgIdx(-1), distance(_distance) {}
 ```
 
-
+## compare strings
+```
+int normType = descriptorType.compare("DES_BINARY") == 0 ? cv::NORM_HAMMING : cv::NORM_L2;
+```
 
 ## Manipulating Matrices
 
@@ -120,4 +123,34 @@ cv::Mat desc;
 cv::Ptr<cv::DescriptorExtractor> descriptor;
 descriptor =  cv::d_name::create(arg1,...);
 descriptor->compute(source, kpt, desc);
+```
+
+## Descriptor Matcher
+Represention(Binary or not) -> Match method(Brute Force or kd-tree based FLANN(ML)) -> K-NN number(best or filter by distance ratio) 
+
+```
+vector<cv::DMatch> matches;
+cv::Ptr<cv::DescriptorMatcher> matcher;
+matcher = cv::M_name::create(normType, crossCheck); //BFMatcher::create(normType, //crossCheck);DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
+matcher->match(descSource, descRef, matches); 
+```
+
+## KNN with distance Ratio threshold
+```
+        vector<vector<cv::DMatch>> knn_matches;
+        double t = (double)cv::getTickCount();
+        matcher->knnMatch(descSource, descRef, knn_matches, 2); // finds the 2 best matches
+        t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+        cout << " (KNN) with n=" << knn_matches.size() << " matches in " << 1000 * t / 1.0 << " ms" << endl;
+
+        // filter matches using descriptor distance ratio test
+        double minDescDistRatio = 0.8;
+        for (auto it = knn_matches.begin(); it != knn_matches.end(); ++it)
+        {
+
+            if ((*it)[0].distance < minDescDistRatio * (*it)[1].distance)
+            {
+                matches.push_back((*it)[0]);
+            }
+        }
 ```
