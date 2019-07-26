@@ -11,7 +11,7 @@ Of special interest is a stereo setup consisting of two synchronized cameras, wh
 
 - TESLA AV:
 
-![no txt](tesla-autopilot-hardware.png)
+![no txt](img/tesla-autopilot-hardware.png)
 
   - **Sonar** : A 360° ultrasonic sonar detects obstacles in an eight-meter radius around the car. The ultrasonic sensors work at any speed and are used to spot objects in close proximity of the car. The ultrasonic sensors can also be used to assist the car when automatically switching lanes. Their range however, compared to the other sensors of the set, is significantly limited and ends at about 8 meters distance.
   
@@ -36,7 +36,7 @@ As mentioned before, the projection of points in 3D space onto the image plane d
 ′
   where kk intersects the image plane is called the principal point and represents the center of the image coordinate system.
   
-![no txt](draggedimage-6.png)
+![no txt](img/draggedimage-6.png)
 
 The first step after projecting a point PP in space onto the image plane is thus to subtract the principal point coordinates so that the discrete image has its own coordinate system centered in e.g. the lower left corner of the image plane
 
