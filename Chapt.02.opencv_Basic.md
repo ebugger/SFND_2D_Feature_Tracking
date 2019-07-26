@@ -57,4 +57,67 @@ It is important to handle large amounts of data in a smart way so that images an
         cv::imshow(windowname, *it);
         cv::waitKey(0); 
 ```
-## 
+
+## DrawPoints
+```
+cv::drawKeypoints(source, keyPoints, dest, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);  //cv::Scalar::all(-1) color random
+```
+## Filter2D
+apply kernel to images
+```
+    cv::Mat blurred = imgGray.clone();
+    float sobel_x[9] = {-1, 0, +1, -2, 0, +2, -1, 0, +1};
+    cv::Mat kernel_x = cv::Mat(3, 3, CV_32F, sobel_x);
+    cv::filter2D(blurred, result_x, -1, kernel_x, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
+    cv::GaussianBlur(imgGray, blurred, cv::Size(filterSize, filterSize), stdDev);
+```
+
+## NMS
+```
+    std::vector<cv::KeyPoint> keyPoints;
+    double maxOverlap = 0.0;
+
+    for(size_t i=0;i<dst_norm.rows;i++){
+        for(size_t j=0;j<dst_norm.cols;j++) {
+            int response = (int)dst_norm.at<float>(i,j); //Harris response matrix, its a float matrix
+            if(response > minResponse) { //store the pointd above the threshold
+                cv::KeyPoint kpt;
+                kpt.pt = cv::Point2f(j,i); //point coords, you shoule switch the i, j!!!
+                kpt.size = 2 * apertureSize; //size
+                kpt.response = response; //response value
+
+                bool bOverlap = false;
+                for(auto it = keyPoints.begin(); it!=keyPoints.end(); ++it) {
+                    double kptOverldap = cv::KeyPoint::overlap(kpt, *it);
+                    if(kptOverldap > maxOverlap) {
+                        bOverlap = true; // first to determine overlap, then compare response value
+                        if(kpt.response > it->response) {
+                            *it = kpt;
+                            break;  //successfuly replace/update one KeyPoint and exit, as others left are already have processed not overlap
+                        }
+                    }
+                }
+                if(!bOverlap)
+                    keyPoints.push_back(kpt); //directly store the ptr not below the threshold and ready to be compred in next response map loop
+            }
+        }
+    }
+```
+## Feature Detect
+```
+vector<cv::KeyPoint> kpt;
+cv::Ptr<cv::FeatureDetector> detector;
+detector = cv::d_name::create(arg1,...);
+
+t = (double)cv::getTickCount();
+detector->detect(source, kpt);
+t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();//measure the running time in ms
+```
+
+## Extract Descriptor
+```
+cv::Mat desc;
+cv::Ptr<cv::DescriptorExtractor> descriptor;
+descriptor =  cv::d_name::create(arg1,...);
+descriptor->compute(source, kpt, desc);
+```
