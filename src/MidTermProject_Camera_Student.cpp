@@ -20,7 +20,7 @@ using namespace std;
 
 /* MAIN PROGRAM */
 int main(int argc, const char *argv[])
-{
+{   
 
     /* INIT VARIABLES AND DATA STRUCTURES */
 
@@ -50,6 +50,7 @@ int main(int argc, const char *argv[])
         ostringstream imgNumber;
         imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex;
         string imgFullFilename = imgBasePath + imgPrefix + imgNumber.str() + imgFileType;
+        //std::cout<<imgFullFilename<<endl;
 
         // load image from file and convert to grayscale
         cv::Mat img, imgGray;
@@ -58,10 +59,13 @@ int main(int argc, const char *argv[])
 
         //// STUDENT ASSIGNMENT
         //// TASK MP.1 -> replace the following code with ring buffer of size dataBufferSize
-
+        //cout<< "Buffer size: " << dataBuffer.size() << endl;
         // push image into data frame buffer
         DataFrame frame;
         frame.cameraImg = imgGray;
+        if(dataBuffer.size() == dataBufferSize) {
+            dataBuffer.erase(dataBuffer.begin());
+        }       
         dataBuffer.push_back(frame);
 
         //// EOF STUDENT ASSIGNMENT
@@ -70,7 +74,7 @@ int main(int argc, const char *argv[])
         /* DETECT IMAGE KEYPOINTS */
 
         // extract 2D keypoints from current image
-        vector<cv::KeyPoint> keypoints; // create empty feature list for current image
+        vector<cv::KeyPoint> keypoints = {}; // create empty feature list for current image
         string detectorType = "SHITOMASI";
 
         //// STUDENT ASSIGNMENT
@@ -81,21 +85,61 @@ int main(int argc, const char *argv[])
         {
             detKeypointsShiTomasi(keypoints, imgGray, false);
         }
-        else
+        else if(detectorType.compare("FAST") == 0)
         {
-            //...
+            detKeypointsModern(keypoints, imgGray, "FAST", false);
         }
+        else if(detectorType.compare("HARRIS") == 0)
+        {
+            detKeypointsModern(keypoints, imgGray, "HARRIS", false);
+        }
+        else if(detectorType.compare("BRISK") == 0)
+        {
+            detKeypointsModern(keypoints, imgGray, "BRISK", false);
+        }
+        else if(detectorType.compare("ORB") == 0)
+        {
+            detKeypointsModern(keypoints, imgGray, "ORB", false);
+        }
+        else if(detectorType.compare("AKAZE") == 0)
+        {
+            detKeypointsModern(keypoints, imgGray, "AKAZE", false);
+        }
+        else if(detectorType.compare("SIFT") == 0)
+        {
+            detKeypointsModern(keypoints, imgGray, "SIFT", false);
+        }
+        //else
+        //{
+        //    cout<< "No detect type matches";
+        //   exit(1);
+        //}
         //// EOF STUDENT ASSIGNMENT
 
         //// STUDENT ASSIGNMENT
         //// TASK MP.3 -> only keep keypoints on the preceding vehicle
 
         // only keep keypoints on the preceding vehicle
-        bool bFocusOnVehicle = true;
+        bool bFocusOnVehicle = true; 
         cv::Rect vehicleRect(535, 180, 180, 150);
         if (bFocusOnVehicle)
-        {
-            // ...
+        {   
+            int count = 0;
+            cv::KeyPoint roi_point; 
+            std::vector<cv::KeyPoint> roi_kpts;
+            for (auto it = keypoints.begin(); it != keypoints.end();++it) {
+                if(vehicleRect.contains(it->pt)) {
+                    //contains return pt.x >= x && pt.x < x + width && pt.y >= y && pt.y < y + height;
+                    //keypoints.erase(it);  !!! not work
+                    roi_point.pt = cv::Point2f(it->pt);
+                    roi_point.size = it->size;
+                    roi_point.response = it->response;
+                    roi_kpts.push_back(roi_point);
+                    count++;
+                }
+            }
+            cout<<"Rect filtered: " << count << " Points"<< endl;
+            keypoints = roi_kpts;
         }
 
         //// EOF STUDENT ASSIGNMENT
@@ -113,6 +157,17 @@ int main(int argc, const char *argv[])
             cv::KeyPointsFilter::retainBest(keypoints, maxKeypoints);
             cout << " NOTE: Keypoints have been limited!" << endl;
         }
+        cout<<"# of kpt in ROI Rect: " << keypoints.size() << endl;
+
+        // distance for between of all the keypoints; Task MP.7
+        float dis_abs = 0;
+        for (auto it=keypoints.begin();it!=keypoints.end();++it){
+            for (auto ij=it+1;ij!=keypoints.end();++ij){
+                float temp_dis = std::sqrt(std::pow((it->pt.x - ij->pt.x), 2) + std::pow((it->pt.y - ij->pt.y), 2));
+                dis_abs += temp_dis;
+            }           
+        }
+        std::cout<<"SSD of the keypoints are: " << dis_abs << std::endl;
 
         // push keypoints and descriptor for current frame to end of data buffer
         (dataBuffer.end() - 1)->keypoints = keypoints;
@@ -157,6 +212,9 @@ int main(int argc, const char *argv[])
             // store matches in current data frame
             (dataBuffer.end() - 1)->kptMatches = matches;
 
+            //Task MP.7 count the matches number
+            std::cout<<"# of matched KeyPoints is: " << matches.size()<< endl;
+
             cout << "#4 : MATCH KEYPOINT DESCRIPTORS done" << endl;
 
             // visualize matches between current and previous image
@@ -178,8 +236,10 @@ int main(int argc, const char *argv[])
             }
             bVis = false;
         }
+        std::cout<< "Detect and Extractor time: " << total_time << endl;
 
     } // eof loop over all images
+    std::cout<< "Detect and Extractor time: " << total_time << endl;
 
     return 0;
 }
