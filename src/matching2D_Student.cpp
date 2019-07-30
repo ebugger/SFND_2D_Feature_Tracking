@@ -1,4 +1,6 @@
 #include <numeric>
+#include <stdio.h>
+#include <iostream>
 #include "matching2D.hpp"
 
 using namespace std;
@@ -6,31 +8,40 @@ using namespace std;
 
 // Find best matches for keypoints in two camera images based on several matching methods
 void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::KeyPoint> &kPtsRef, cv::Mat &descSource, cv::Mat &descRef,
-                      std::vector<cv::DMatch> &matches, std::string descriptorType, std::string matcherType, std::string selectorType)
+                      std::vector<cv::DMatch> &matches, /* std::string descriptorType, */std::string matcherType, std::string selectorType)
 {
+    cout<<"Start matching... "<<endl;
     // configure matcher
     bool crossCheck = false;
     cv::Ptr<cv::DescriptorMatcher> matcher;
 
     if (matcherType.compare("MAT_BF") == 0)
     {
-        int normType = cv::NORM_HAMMING;
+        //int normType = descriptorType.compare("DES_BINARY") == 0 ? cv::NORM_HAMMING : cv::NORM_L2;
+        //int normType = descSource.type() != CV_32F ? cv::NORM_HAMMING : cv::NORM_L2;
+        int normType = descSource.type() == 0 ? cv::NORM_HAMMING : cv::NORM_L2;
+        //int normType = cv::NORM_HAMMING;
         matcher = cv::BFMatcher::create(normType, crossCheck);
+        cout<<"descSource.type: " << descSource.type()<<endl;
+        cout<<"descRef.type: " << descRef.type()<<endl;        
     }
     else if (matcherType.compare("MAT_FLANN") == 0)
     {   
-        if(descSource.type() != CV_32F) {
+        if(/* descSource.type() != CV_32F ||*/ descRef.type() != CV_32F ) {
             descSource.convertTo(descSource, CV_32F);
+            //cout<<"descSource/prev type: " << descSource.type()<<endl;
             descRef.convertTo(descRef, CV_32F);
+            //cout<<"descSource/curr: " << descRef.type()<<endl;
         }
+        cout<<"descSource.type: " << descSource.type()<<endl;
+        cout<<"descRef.type: " << descRef.type()<<endl;
+        //cout<<"descSource.empty: " << descSource.empty()<<endl;
         matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
-        // ...
     }
 
     // perform matching task
     if (selectorType.compare("SEL_NN") == 0)
     { // nearest neighbor (best match)
-
         matcher->match(descSource, descRef, matches); // Finds the best match for each descriptor in desc1
     }
     else if (selectorType.compare("SEL_KNN") == 0)
@@ -40,7 +51,6 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
         matcher->knnMatch(descSource, descRef, matches_knn, 2);
         t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
         std::cout << " (KNN) with n=" << matches_knn.size() << " matches in " << 1000 * t / 1.0 << " ms" << endl;
-        total_time += 1000 * t / 1.0;
         // TODO : filter matches using descriptor distance ratio test
         const float rationThreshold = 0.8f;
         for(auto it=matches_knn.begin();it!=matches_knn.end();it++) {
@@ -53,7 +63,7 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
 }
 
 // Use one of several types of state-of-art descriptors to uniquely identify keypoints
-void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descriptors, string descriptorType)
+void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descriptors, string descriptorType, double &total_time, int& des_type, int& d_norm)
 {
     // select appropriate descriptor
     cv::Ptr<cv::DescriptorExtractor> extractor;
@@ -78,7 +88,8 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
     }
     else if(descriptorType.compare("SIFT") == 0)
     {
-        extractor = cv::xfeatures2d::SiftDescriptorExtractor::create();
+        //extractor = cv::xfeatures2d::SiftDescriptorExtractor::create();
+        extractor = cv::xfeatures2d::SIFT::create();
         //...
     }
     else if(descriptorType.compare("FREAK") == 0)
@@ -95,15 +106,23 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
 
     // perform feature description
     double t = (double)cv::getTickCount();
+    //cout<<"start akaza descriptor..."<<endl;
+    if (descriptorType.compare("AKAZE") == 0)
+        extractor->detectAndCompute(img, cv::noArray(), keypoints, descriptors,false);
     extractor->compute(img, keypoints, descriptors);
+    //cout<<"done akaza descriptor..."<<endl;
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
     total_time += 1000 * t / 1.0;
     std::cout << descriptorType << " descriptor: " << descriptorType<< " extraction in " << total_time << " ms" << endl;
     total_time += 1000 * t / 1.0;
+    des_type = extractor->descriptorType();
+    d_norm = extractor->defaultNorm();
+    //cout<<descriptorType<<" Descripter type: "<< extractor->descriptorType()<< endl;
+    //cout<<descriptorType<<" Descripter Norm: "<< extractor->defaultNorm()<< endl;
 }
 
 // Detect keypoints in image using the traditional Shi-Thomasi detector
-void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis)
+void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis, double &total_time)
 {
     // compute detector parameters based on image size
     int blockSize = 4;       //  size of an average block for computing a derivative covariation matrix over each pixel neighborhood
@@ -144,7 +163,7 @@ void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool b
     }
 }
 
-void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::string detectorType, bool bVis = false) {
+void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::string detectorType, bool bVis, double &total_time) {
     string windowname; 
     if(detectorType.compare("HARRIS") == 0) {
         int blockSize = 2;     // for every pixel, a blockSize × blockSize neighborhood is considered
@@ -194,7 +213,6 @@ void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std:
         img = dst_norm_scaled;
         windowname = "Harris Corner Detector Result";       
     }
-
     if(detectorType.compare("FAST") == 0) {
         int fastThreshold = 30;
         bool fastNMS = true;
@@ -259,7 +277,7 @@ void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std:
     
     }
     if(detectorType.compare("AKAZE") == 0) {
-        cv::AKAZE::DescriptorType a_type = cv::AKAZE::DescriptorType::DESCRIPTOR_MLDB;
+        //cv::AKAZE::DescriptorType a_type = cv::AKAZE::DescriptorType::DESCRIPTOR_MLDB;
         cv::Ptr<cv::FeatureDetector> detector = cv::AKAZE::create();
         double t = (double)cv::getTickCount();
         detector->detect(img, keypoints);
