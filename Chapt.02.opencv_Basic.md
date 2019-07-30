@@ -1,3 +1,5 @@
+# About the detector:
+BRISK,BRIEF, ORB, FREAK, AKAZE are binary hamming class descriptors(type=0,CV_8U) and need to use HAMMING Norm to compute,others are float descriptor(type=5  CV_32F) and need to use L2_Norm to computer
 ## structure
 
 Point2f(x,y)
