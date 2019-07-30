@@ -22,14 +22,14 @@ using namespace std;
 int main(int argc, const char *argv[])
 {   
     ofstream MyExcelFile;
-    MyExcelFile.open("./test.csv");
+    MyExcelFile.open("./summary.csv");
     MyExcelFile << "Detector, Extractor, Process Time, NN_dis, n_matched, descriptor_dtype, des_norm" << endl;
     double total_time = 0;
     static float toal_dis = 0;
     static int total_matched = 0;
     string detectorType;
     string descriptorType;
-    //BRISK,BRIEF, ORB, FREAK, AKAZE are binary hamming class descriptors(type=0,CV_8U),others are euclid descriptor(type=5  CV_32F)
+    //BRISK,BRIEF, ORB, FREAK, AKAZE are binary hamming class descriptors(type=0,CV_8U),others are descriptor(type=5  CV_32F)
     std::vector<std::string> detectorT = { "SHITOMASI", "FAST", "HARRIS", "BRISK", "ORB", "SIFT","AKAZE"};//"SHITOMASI", "FAST", "HARRIS", "BRISK", "ORB", "SIFT","AKAZE" 
     std::vector<std::string> descriptorT = {"BRISK", "BRIEF", "ORB", "FREAK", "SIFT","AKAZE"};//"BRISK", "BRIEF", "ORB", "FREAK", "SIFT","AKAZE",
     for(auto it=detectorT.begin();it!=detectorT.end();++it) {
