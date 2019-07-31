@@ -2,6 +2,8 @@
 BRISK,BRIEF, ORB, FREAK, AKAZE are binary hamming class descriptors(type=0,CV_8U) and need to use HAMMING Norm to compute,others are float descriptor(type=5  CV_32F) and need to use L2_Norm to computer
 ## structure
 ```
+cv::Size(w, h)  //ori (x,y)
+cv::Mat(rows, cols) // ori(y,x)
 cv:Mat mat;
 int rows = mat.rows;
 int cols = mat.cols;
@@ -16,8 +18,11 @@ Point2f(x,y)
 ```
 template<typename _Tp> inline
 Point_<_Tp>::Point_()
-    : x(0), y(0) {}
+    : x(0), y(0) {} //ori (w, h)
 ```
+
+### coord transform:
+![no txt](img/transform.jpg)
 
 KeyPoint:
 ```
